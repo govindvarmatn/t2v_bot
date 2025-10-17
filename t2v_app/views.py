@@ -66,7 +66,11 @@ def generate_video(request):
             video_request.status = 'failed'
             video_request.error_message = str(e)
             video_request.save()
-        return JsonResponse({'error': str(e)}, status=500)
+        # Log the actual error for debugging but return generic message to user
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error generating video: {str(e)}", exc_info=True)
+        return JsonResponse({'error': 'An error occurred while generating the video. Please try again.'}, status=500)
 
 
 def enhance_prompt_with_ollama(text_prompt):
