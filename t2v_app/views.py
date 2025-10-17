@@ -1,6 +1,5 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.conf import settings
 import json
@@ -8,6 +7,9 @@ import requests
 from .models import VideoRequest
 
 
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+@ensure_csrf_cookie
 def index(request):
     """Main page view"""
     return render(request, 't2v_app/index.html')
@@ -15,11 +17,11 @@ def index(request):
 
 def dashboard(request):
     """Dashboard view showing all video requests"""
-    video_requests = VideoRequest.objects.all()
+    # Limit to recent 100 requests for performance
+    video_requests = VideoRequest.objects.all()[:100]
     return render(request, 't2v_app/dashboard.html', {'video_requests': video_requests})
 
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def generate_video(request):
     """API endpoint to generate video from text"""
@@ -79,7 +81,7 @@ def enhance_prompt_with_ollama(text_prompt):
         response = requests.post(
             settings.OLLAMA_API_URL,
             json=payload,
-            timeout=30
+            timeout=15
         )
         
         if response.status_code == 200:

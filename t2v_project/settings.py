@@ -20,12 +20,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-h+&&=(7wyenzr5(!qbds+q2z9i-!&#@0oolw6y1b$07e%xd&y7'
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-h+&&=(7wyenzr5(!qbds+q2z9i-!&#@0oolw6y1b$07e%xd&y7')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
 
 
 # Application definition
@@ -49,6 +54,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# CSRF settings
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF cookie
+CSRF_USE_SESSIONS = False
 
 ROOT_URLCONF = 't2v_project.urls'
 

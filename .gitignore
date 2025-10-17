@@ -33,6 +33,7 @@ staticfiles/
 
 # Environment
 .env
+!.env.example
 .venv
 
 # IDE

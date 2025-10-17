@@ -36,22 +36,28 @@ cd t2v_bot
 pip install -r requirements.txt
 ```
 
-3. Run database migrations:
+3. Create a `.env` file (copy from `.env.example` and update as needed):
+```bash
+cp .env.example .env
+# Edit .env and set your own DJANGO_SECRET_KEY
+```
+
+4. Run database migrations:
 ```bash
 python manage.py migrate
 ```
 
-4. Create a superuser (optional, for admin access):
+5. Create a superuser (optional, for admin access):
 ```bash
 python manage.py createsuperuser
 ```
 
-5. Start the development server:
+6. Start the development server:
 ```bash
 python manage.py runserver
 ```
 
-6. Open your browser and navigate to:
+7. Open your browser and navigate to:
    - Main application: http://localhost:8000/
    - Admin panel: http://localhost:8000/admin/
 
@@ -138,6 +144,25 @@ The main configuration options are in `t2v_project/settings.py`:
 - `OLLAMA_API_URL`: URL for the Ollama API (default: `http://localhost:11434/api/generate`)
 - `MEDIA_ROOT`: Directory for storing generated videos
 - `STATIC_URL`: URL prefix for static files
+
+### Environment Variables
+
+Create a `.env` file based on `.env.example`:
+
+- `DJANGO_SECRET_KEY`: Django secret key (generate a new one for production)
+- `DEBUG`: Set to `False` in production
+- `ALLOWED_HOSTS`: Comma-separated list of allowed hosts for production
+
+## Security
+
+This project implements several security best practices:
+
+- CSRF protection enabled for all POST requests
+- Secret key stored in environment variables (not in code)
+- Debug mode configurable via environment variables
+- SQL injection protection through Django ORM
+- XSS protection through Django templates
+- Timeout limits on external API calls (15 seconds for Ollama)
 
 ## Development
 
