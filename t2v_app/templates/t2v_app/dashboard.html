@@ -76,40 +76,54 @@ async function viewDetails(requestId) {
         const data = await response.json();
         
         if (response.ok) {
-            modalContent.innerHTML = `
-                <div class="detail-item">
-                    <strong>Request ID:</strong> ${data.id}
-                </div>
-                <div class="detail-item">
-                    <strong>Status:</strong> <span class="status-badge status-${data.status}">${data.status}</span>
-                </div>
-                <div class="detail-item">
-                    <strong>Original Prompt:</strong><br>
-                    ${data.text_prompt}
-                </div>
-                <div class="detail-item">
-                    <strong>Enhanced Prompt:</strong><br>
-                    ${data.enhanced_prompt || 'N/A'}
-                </div>
-                ${data.video_url ? `
-                <div class="detail-item">
-                    <strong>Video URL:</strong><br>
-                    <a href="${data.video_url}" target="_blank">${data.video_url}</a>
-                </div>
-                ` : ''}
-                ${data.error_message ? `
-                <div class="detail-item error">
-                    <strong>Error:</strong><br>
-                    ${data.error_message}
-                </div>
-                ` : ''}
-                <div class="detail-item">
-                    <strong>Created:</strong> ${new Date(data.created_at).toLocaleString()}
-                </div>
-                <div class="detail-item">
-                    <strong>Updated:</strong> ${new Date(data.updated_at).toLocaleString()}
-                </div>
-            `;
+            // Clear and safely build modal content to prevent XSS
+            modalContent.innerHTML = '';
+            
+            const createDetailItem = (label, value, className = '') => {
+                const div = document.createElement('div');
+                div.className = 'detail-item' + (className ? ' ' + className : '');
+                const strong = document.createElement('strong');
+                strong.textContent = label + ':';
+                div.appendChild(strong);
+                
+                if (label === 'Video URL' && value) {
+                    div.appendChild(document.createElement('br'));
+                    const a = document.createElement('a');
+                    a.href = value;
+                    a.target = '_blank';
+                    a.textContent = value;
+                    div.appendChild(a);
+                } else if (label === 'Status') {
+                    const span = document.createElement('span');
+                    span.className = `status-badge status-${value}`;
+                    span.textContent = value;
+                    div.appendChild(document.createTextNode(' '));
+                    div.appendChild(span);
+                } else {
+                    if (label.includes('Prompt') || label.includes('Error')) {
+                        div.appendChild(document.createElement('br'));
+                    }
+                    div.appendChild(document.createTextNode(' ' + value));
+                }
+                return div;
+            };
+            
+            modalContent.appendChild(createDetailItem('Request ID', data.id));
+            modalContent.appendChild(createDetailItem('Status', data.status));
+            modalContent.appendChild(createDetailItem('Original Prompt', data.text_prompt));
+            modalContent.appendChild(createDetailItem('Enhanced Prompt', data.enhanced_prompt || 'N/A'));
+            
+            if (data.video_url) {
+                modalContent.appendChild(createDetailItem('Video URL', data.video_url));
+            }
+            
+            if (data.error_message) {
+                modalContent.appendChild(createDetailItem('Error', data.error_message, 'error'));
+            }
+            
+            modalContent.appendChild(createDetailItem('Created', new Date(data.created_at).toLocaleString()));
+            modalContent.appendChild(createDetailItem('Updated', new Date(data.updated_at).toLocaleString()));
+            
             modal.style.display = 'block';
         } else {
             alert('Failed to load request details');

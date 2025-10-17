@@ -13,6 +13,7 @@
         <div class="card">
             <h2>Generate Video</h2>
             <form id="generateForm">
+                {% csrf_token %}
                 <div class="form-group">
                     <label for="textPrompt">Enter your text prompt:</label>
                     <textarea 
@@ -113,16 +114,51 @@ document.getElementById('generateForm').addEventListener('submit', async (e) => 
         const data = await response.json();
         
         if (response.ok && data.success) {
-            // Show result
+            // Show result - using safe DOM manipulation to prevent XSS
             resultSection.style.display = 'block';
-            document.getElementById('resultContent').innerHTML = `
-                <p><strong>Request ID:</strong> ${data.request_id}</p>
-                <p><strong>Status:</strong> <span class="status-${data.status}">${data.status}</span></p>
-                <p><strong>Original Prompt:</strong> ${textPrompt}</p>
-                <p><strong>Enhanced Prompt:</strong> ${data.enhanced_prompt || 'N/A'}</p>
-                ${data.video_url ? `<p><strong>Video URL:</strong> <a href="${data.video_url}" target="_blank">${data.video_url}</a></p>` : ''}
-                <a href="/dashboard/" class="btn btn-secondary">View in Dashboard</a>
-            `;
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = ''; // Clear previous content
+            
+            // Create elements safely
+            const createP = (label, value, className = '') => {
+                const p = document.createElement('p');
+                const strong = document.createElement('strong');
+                strong.textContent = label + ': ';
+                p.appendChild(strong);
+                if (className) {
+                    const span = document.createElement('span');
+                    span.className = className;
+                    span.textContent = value;
+                    p.appendChild(span);
+                } else {
+                    p.appendChild(document.createTextNode(value));
+                }
+                return p;
+            };
+            
+            resultContent.appendChild(createP('Request ID', data.request_id));
+            resultContent.appendChild(createP('Status', data.status, `status-${data.status}`));
+            resultContent.appendChild(createP('Original Prompt', textPrompt));
+            resultContent.appendChild(createP('Enhanced Prompt', data.enhanced_prompt || 'N/A'));
+            
+            if (data.video_url) {
+                const p = document.createElement('p');
+                const strong = document.createElement('strong');
+                strong.textContent = 'Video URL: ';
+                const a = document.createElement('a');
+                a.href = data.video_url;
+                a.target = '_blank';
+                a.textContent = data.video_url;
+                p.appendChild(strong);
+                p.appendChild(a);
+                resultContent.appendChild(p);
+            }
+            
+            const dashboardLink = document.createElement('a');
+            dashboardLink.href = '/dashboard/';
+            dashboardLink.className = 'btn btn-secondary';
+            dashboardLink.textContent = 'View in Dashboard';
+            resultContent.appendChild(dashboardLink);
         } else {
             throw new Error(data.error || 'Failed to generate video');
         }
