@@ -1,0 +1,122 @@
+{% extends "t2v_app/base.html" %}
+
+{% block title %}Generate Video - T2V Bot{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero-section">
+        <h1>Text to Video Generator</h1>
+        <p>Transform your text into engaging videos using AI-powered Ollama and T2V models</p>
+    </div>
+
+    <div class="generate-section">
+        <div class="card">
+            <h2>Generate Video</h2>
+            <form id="generateForm">
+                <div class="form-group">
+                    <label for="textPrompt">Enter your text prompt:</label>
+                    <textarea 
+                        id="textPrompt" 
+                        name="text_prompt" 
+                        rows="5" 
+                        placeholder="Describe the video you want to create... (e.g., A beautiful sunset over the ocean with waves crashing on the shore)"
+                        required
+                    ></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" id="generateBtn">
+                    <span class="btn-text">Generate Video</span>
+                    <span class="btn-loader" style="display: none;">Processing...</span>
+                </button>
+            </form>
+
+            <div id="resultSection" style="display: none;">
+                <div class="result-card">
+                    <h3>Generation Result</h3>
+                    <div id="resultContent"></div>
+                </div>
+            </div>
+
+            <div id="errorSection" style="display: none;">
+                <div class="error-card">
+                    <h3>Error</h3>
+                    <p id="errorMessage"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="info-card">
+            <h3>🤖 Powered by Ollama</h3>
+            <p>Your prompts are enhanced using Ollama's LLM to create more descriptive and cinematic descriptions.</p>
+        </div>
+        <div class="info-card">
+            <h3>🎬 T2V Model</h3>
+            <p>Advanced text-to-video generation models transform your enhanced prompts into videos.</p>
+        </div>
+        <div class="info-card">
+            <h3>📊 Track Progress</h3>
+            <p>Monitor all your video generation requests in the dashboard.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('generateForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const textPrompt = document.getElementById('textPrompt').value;
+    const generateBtn = document.getElementById('generateBtn');
+    const btnText = generateBtn.querySelector('.btn-text');
+    const btnLoader = generateBtn.querySelector('.btn-loader');
+    const resultSection = document.getElementById('resultSection');
+    const errorSection = document.getElementById('errorSection');
+    
+    // Reset previous results
+    resultSection.style.display = 'none';
+    errorSection.style.display = 'none';
+    
+    // Show loading state
+    generateBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoader.style.display = 'inline';
+    
+    try {
+        const response = await fetch('/api/generate/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text_prompt: textPrompt })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            // Show result
+            resultSection.style.display = 'block';
+            document.getElementById('resultContent').innerHTML = `
+                <p><strong>Request ID:</strong> ${data.request_id}</p>
+                <p><strong>Status:</strong> <span class="status-${data.status}">${data.status}</span></p>
+                <p><strong>Original Prompt:</strong> ${textPrompt}</p>
+                <p><strong>Enhanced Prompt:</strong> ${data.enhanced_prompt || 'N/A'}</p>
+                ${data.video_url ? `<p><strong>Video URL:</strong> <a href="${data.video_url}" target="_blank">${data.video_url}</a></p>` : ''}
+                <a href="/dashboard/" class="btn btn-secondary">View in Dashboard</a>
+            `;
+        } else {
+            throw new Error(data.error || 'Failed to generate video');
+        }
+    } catch (error) {
+        errorSection.style.display = 'block';
+        document.getElementById('errorMessage').textContent = error.message;
+    } finally {
+        // Reset button state
+        generateBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoader.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}
